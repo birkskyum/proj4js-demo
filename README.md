@@ -3,7 +3,7 @@ Proj4.js demo
 No SSR - it's running in browser client.
 
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/birkskyum/proj4js-demo)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/birkskyum/proj4js-demo?file=src%2Froutes%2Findex.tsx)
 
 
 
