@@ -4,7 +4,7 @@ No SSR - it's running in browser client.
 
 
 
-![Demo Video](./cover.mov)
+https://github.com/user-attachments/assets/b77721d0-009a-4126-9278-184b519f8542
 
 
 ![Cover Image](./cover.png)
