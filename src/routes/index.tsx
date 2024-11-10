@@ -1,7 +1,11 @@
 import { Title } from "@solidjs/meta";
 import proj4 from "proj4";
 import Counter from "~/components/Counter";
-import { createSignal } from "solid-js";
+import { createSignal, onCleanup } from "solid-js";
+
+
+
+
 
 function generateLatLngGrid(spacing: number) {
   const points = [];
@@ -14,36 +18,76 @@ function generateLatLngGrid(spacing: number) {
 }
 
 export default function Home() {
+
+ function lerp(a: number, b: number, mix: number): number {
+  return a * (1.0 - mix) + b * mix;
+  }
   
   const equalEarthProjection = 'PROJCS["World_Equal_Earth",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Equal_Earth"],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["longitude_of_center",0],PARAMETER["latitude_of_center",0],UNIT["Meter",1]]';
   const webMercatorProjection = 'PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1],AUTHORITY["EPSG","3857"]]';
   const verticalPerspectiveProjection = '+proj=geos +lat_0=0 +lon_0=0 +h=35785831 +datum=WGS84 +units=m +no_defs';
+
   
   const gridSpacing = 10; // degrees
   const latLngGrid = generateLatLngGrid(gridSpacing);
-  const [projectionType, setProjectionType] = createSignal("EqualEarth");
-  const [projectedGrid, setProjectedGrid] = createSignal(latLngGrid.map(coords => proj4('EPSG:4326', equalEarthProjection, coords)));
+
+  
+  const equalEarthCoords = latLngGrid.map(coords => proj4('EPSG:4326', equalEarthProjection, coords));
+  const webMercatorCoords = latLngGrid.map(coords => proj4('EPSG:4326', webMercatorProjection, coords));
+  const verticalPerspectiveCoords = latLngGrid.map(coords => proj4('EPSG:4326', verticalPerspectiveProjection, coords));
+  
+  const [projectionType, setProjectionType] = createSignal("WebMercator");
+  const [projectedGrid, setProjectedGrid] = createSignal(structuredClone(webMercatorCoords));
+  const [animationFrame, setAnimationFrame] = createSignal(null);
+  
+
+  const animateProjection = (startGrid, endGrid, duration) => {
+    const startTime = performance.now();
+    const animate = (time) => {
+      const elapsed = time - startTime;
+      const mix = Math.min(elapsed / duration, 1);
+      setProjectedGrid(startGrid.map((startCoords, i) => {
+        const [startX, startY] = startCoords;
+        const [endX, endY] = endGrid[i];
+        return [lerp(startX, endX, mix), lerp(startY, endY, mix)];
+      }));
+      
+      if (mix < 1) {
+        setAnimationFrame(requestAnimationFrame(animate));
+      }
+    };
+    setAnimationFrame(requestAnimationFrame(animate));
+  };
 
   const updateProjection = (type) => {
+
+    cancelAnimationFrame(animationFrame());
+
     setProjectionType(type);
-    let newProjection;
+    let endGrid;
     switch (type) {
       case "WebMercator":
-        newProjection = webMercatorProjection;
+        endGrid = structuredClone(webMercatorCoords);
+        
         break;
       case "VerticalPerspective":
-        newProjection = verticalPerspectiveProjection;
+        endGrid = structuredClone(verticalPerspectiveCoords);
+        
         break;
       case "EqualEarth":
       default:
-        newProjection = equalEarthProjection;
+        endGrid = structuredClone(equalEarthCoords);
+        
         break;
     }
-    setProjectedGrid(latLngGrid.map(coords => {
-      const [x, y] = proj4('EPSG:4326', newProjection, coords);
-      return [isNaN(x) ? 0 : x, isNaN(y) ? 0 : y];
-    }));
+    animateProjection(structuredClone(projectedGrid()), structuredClone(endGrid), 0);
   };
+
+  onCleanup(() => {
+    if (animationFrame()) {
+      cancelAnimationFrame(animationFrame());
+    }
+  });
 
   
   console.log('Lat/Lng Grid', latLngGrid);
@@ -69,7 +113,7 @@ export default function Home() {
       </button>
 
       <br />
-      <svg width="800" height="400" viewBox="-20000000 -10000000 40000000 20000000" style={{ border: "1px solid black" }}>
+      <svg width="800" height="800" viewBox={"-20000000 -10000000 40000000 20000000"} style={{ border: "1px solid black" }}>
         {projectedGrid().map(([x, y]) => (
           <circle cx={x} cy={-y} r="200000" fill="red" />
         ))}
