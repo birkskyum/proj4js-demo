@@ -4,6 +4,9 @@ No SSR - it's running in browser client.
 
 
 
+![Demo Video](./cover.mov)
+
+
 ![Cover Image](./cover.png)
 
 To run
