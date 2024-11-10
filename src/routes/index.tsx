@@ -144,11 +144,11 @@ export default function Home() {
 
 
 
-          if (x == undefined  || y == undefined) {
-            return <circle cx={x} cy={-y} r="400000" fill="blue" />
-          } else {
+          // if (x == undefined  || y == undefined) {
+          //   return <circle cx={x} cy={-y} r="400000" fill="blue" />
+          // } else {
             return <circle cx={x} cy={-y} r="200000" fill="red" />
-          }
+          // }
          
         })}
 
