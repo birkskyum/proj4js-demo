@@ -1,11 +1,5 @@
-import { Title } from "@solidjs/meta";
 import proj4 from "proj4";
-import Counter from "~/components/Counter";
 import { createSignal, onCleanup } from "solid-js";
-
-
-
-
 
 function generateLatLngGrid(spacing: number) {
   const points = [];
@@ -15,6 +9,12 @@ function generateLatLngGrid(spacing: number) {
     }
   }
   return points;
+}
+
+enum ProjectionType {
+  EqualEarth = "Equal Earth",
+  WebMercator = "Web Mercator",
+  VerticalPerspective = "Vertical Perspective"
 }
 
 export default function Home() {
@@ -36,9 +36,12 @@ export default function Home() {
   const webMercatorCoords = latLngGrid.map(coords => proj4('EPSG:4326', webMercatorProjection, coords));
   const verticalPerspectiveCoords = latLngGrid.map(coords => proj4('EPSG:4326', verticalPerspectiveProjection, coords));
   
-  const [projectionType, setProjectionType] = createSignal("WebMercator");
+
+  
+
+  const [projectionType, setProjectionType] = createSignal(ProjectionType.WebMercator);
   const [projectedGrid, setProjectedGrid] = createSignal(structuredClone(webMercatorCoords));
-  const [animationFrame, setAnimationFrame] = createSignal(null);
+  const [animationFrame, setAnimationFrame] = createSignal<number | undefined>(undefined);
   
 
   const animateProjection = (startGrid, endGrid, duration) => {
@@ -59,22 +62,22 @@ export default function Home() {
     setAnimationFrame(requestAnimationFrame(animate));
   };
 
-  const updateProjection = (type) => {
+  const updateProjection = (type: ProjectionType) => {
 
-    cancelAnimationFrame(animationFrame());
+    cancelAnimationFrame(animationFrame()!);
 
     setProjectionType(type);
     let endGrid;
     switch (type) {
-      case "WebMercator":
+      case ProjectionType.WebMercator:
         endGrid = structuredClone(webMercatorCoords);
         
         break;
-      case "VerticalPerspective":
+      case ProjectionType.VerticalPerspective:
         endGrid = structuredClone(verticalPerspectiveCoords);
         
         break;
-      case "EqualEarth":
+      case ProjectionType.EqualEarth:
       default:
         endGrid = structuredClone(equalEarthCoords);
         
@@ -85,7 +88,7 @@ export default function Home() {
 
   onCleanup(() => {
     if (animationFrame()) {
-      cancelAnimationFrame(animationFrame());
+      cancelAnimationFrame(animationFrame()!);
     }
   });
 
@@ -102,13 +105,13 @@ export default function Home() {
 
       </p>
 
-      <button onClick={() => updateProjection("EqualEarth")}>
+      <button onClick={() => updateProjection(ProjectionType.EqualEarth)}>
         Equal Earth
       </button>
-      <button onClick={() => updateProjection("WebMercator")}>
+      <button onClick={() => updateProjection(ProjectionType.WebMercator)}>
         Web Mercator
       </button>
-      <button onClick={() => updateProjection("VerticalPerspective")}>
+      <button onClick={() => updateProjection(ProjectionType.VerticalPerspective)}>
         Vertical Perspective
       </button>
 
