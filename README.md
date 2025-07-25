@@ -1,4 +1,4 @@
-Proj4.js demo
+Proj4.js demo (for proj4-wasm see this [repo](https://github.com/birkskyum/proj4wasm-demo/))
 
 No SSR - it's running in browser client.
 
